@@ -1,18 +1,75 @@
+from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from datetime import datetime, timezone, timedelta
+from Functions import SelectGPU, TelegramMonitor
+from selenium import webdriver
 import configparser
-from telethon.sync import TelegramClient
+import random
+import time
+
+GPU = 'putgpuyouwanttobuy like 3070 or 3070 ti'
+
+PriceOfGPU = SelectGPU(GPU)
+
+while True:
+    LinkMonitor = TelegramMonitor(PriceOfGPU)
+    print(LinkMonitor[0])
+    ct = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    ct = datetime.strptime(ct, "%Y-%m-%d %H:%M:%S")
+    t1 = datetime.strptime(str(LinkMonitor[1]).replace('+00:00', ''), "%Y-%m-%d %H:%M:%S")
+    t3 = ct-t1
+    if t3 < timedelta(minutes=1):
+        ShopURL = LinkMonitor[0]
+        print(t3)
+        break
 
 config = configparser.ConfigParser()
 config.read("config.ini")
 
-# Setting configuration values
-api_id = config['Telegram']['api_id']
-api_hash = config['Telegram']['api_hash']
-api_hash = str(api_hash)
-phone = config['Telegram']['phone']
-username = config['Telegram']['username']
+CardNum = config['Card']['CardNum']
+Exp = config['Card']['Exp']
+CCV = config['Card']['CCV']
+Name = config['Card']['Name']
 
-chat = 'https://t.me/joinchat/AAAAAEii3xT81U1A6tLjrQ'
+ShopURL = ShopURL
+path = Service("C:\\chromedriver.exe")
+options = Options()
+options.add_argument("--window-size=1280,800")
+options.add_argument(r"--user-data-dir=C:\Users\Ouael\AppData\Local\Google\Chrome\User Data\Default")
+driver = webdriver.Chrome(options=options, service=path)
+driver.get(ShopURL)
 
-with TelegramClient(username, api_id, api_hash) as client:
-    for message in client.iter_messages(chat, limit = 100, search= '(FR)** 💰 €519.00'):
-        print(message.date, ':', message.text)
+while True:
+    try:
+        driver.find_element_by_xpath('//button[normalize-space()="Acheter cet article"]').click()
+        print('found buy button')
+        time.sleep(random.randint(1, 2))
+        break
+    except NoSuchElementException:
+        continue
+
+while True:
+    try:
+        WarrantyPopUp = driver.find_element_by_xpath("/html/body/div[4]/div[5]/div/div/div[2]/div[4]/div/div[2]/a").click()
+        time.sleep(random.randint(1, 2))
+        break
+    except NoSuchElementException:
+        time.sleep(random.randint(2,3))
+        if driver.current_url == 'https://secure2.ldlc.com/fr-fr/DeliveryPayment':
+            break
+        elif driver.current_url == ShopURL:
+            try:
+                driver.find_element_by_xpath('//button[normalize-space()="Acheter cet article"]').click()
+                continue
+            except ElementClickInterceptedException:
+                driver.refresh()
+                continue
+
+
+CardInput = driver.find_element_by_xpath('/html/body/div[3]/div/div[4]/div[2]/div[1]/div/div/form/div[2]/div/input').send_keys(CardNum)
+CardInput = driver.find_element_by_xpath('/html/body/div[3]/div/div[4]/div[2]/div[1]/div/div/form/div[3]/div/input[1]').send_keys(Exp)
+CardInput = driver.find_element_by_xpath('/html/body/div[3]/div/div[4]/div[2]/div[1]/div/div/form/div[5]/div/input').send_keys(CCV)
+CardInput = driver.find_element_by_xpath('/html/body/div[3]/div/div[4]/div[2]/div[1]/div/div/form/div[4]/div/input').send_keys(Name)
+time.sleep(random.randint(1, 2))
+driver.find_element_by_xpath('/html/body/div[3]/div/div[4]/div[2]/div[1]/div/div/form/div[8]/div/button').click()
