@@ -5,6 +5,7 @@ from datetime import datetime, timezone, timedelta
 from Functions import SelectGPU, TelegramMonitor
 from selenium import webdriver
 from asyncio.exceptions import CancelledError
+from sqlite3 import OperationalError
 import configparser
 import random
 import time
@@ -27,6 +28,9 @@ while True:
             break
     except CancelledError:
         print('found error, continuing')
+        continue
+    except OperationalError:
+        time.sleep(5)
         continue
 
 config = configparser.ConfigParser()
